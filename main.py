@@ -50,6 +50,26 @@ def generate_reply(data: ReplyRequest):
         {data.message}
         """
 
+    elif data.mode == "Mode Ngeles":
+
+        task_instruction = f"""
+        Tugas:
+        Buat 3 balasan dengan gaya ngeles yang lucu, realistis, halus, dan relatable.
+
+        STYLE:
+        - Terdengar natural
+        - Jangan terlalu jahat
+        - Jangan toxic
+        - Jangan manipulatif berlebihan
+        - Harus terasa seperti alasan manusia sehari-hari
+        - Sedikit lucu boleh
+        - Cocok dipakai di WhatsApp
+        - Maksimal 1-2 kalimat
+
+        Pesan:
+        {data.message}
+        """
+
     else:
 
         task_instruction = """
