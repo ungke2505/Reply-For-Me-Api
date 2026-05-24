@@ -6,8 +6,8 @@ import os
 
 load_dotenv()
 
-OPENROUTER_API_KEY = os.getenv(
-    "OPENROUTER_API_KEY"
+OPENAI_API_KEY = os.getenv(
+    "OPENAI_API_KEY"
 )
 
 app = FastAPI()
@@ -52,23 +52,44 @@ def generate_reply(data: ReplyRequest):
 
     elif data.mode == "Mode Ngeles":
 
-        task_instruction = f"""
-        Tugas:
-        Buat 3 balasan dengan gaya ngeles yang lucu, realistis, halus, dan relatable.
+        if data.context == "Boss":
 
-        STYLE:
-        - Terdengar natural
-        - Jangan terlalu jahat
-        - Jangan toxic
-        - Jangan manipulatif berlebihan
-        - Harus terasa seperti alasan manusia sehari-hari
-        - Sedikit lucu boleh
-        - Cocok dipakai di WhatsApp
-        - Maksimal 1-2 kalimat
+            task_instruction = f"""
+            Tugas:
+            Buat 3 balasan ngeles yang sopan, aman, profesional, dan realistis untuk atasan kerja.
 
-        Pesan:
-        {data.message}
-        """
+            PENTING:
+            - Jangan terlalu lucu
+            - Jangan bercanda berlebihan
+            - Jangan terdengar tidak profesional
+            - Jangan membuat alasan yang absurd
+            - Tetap terdengar natural dan manusiawi
+            - Harus aman digunakan untuk komunikasi kerja
+            - Tetap singkat dan realistis
+
+            Pesan:
+            {data.message}
+            """
+
+        else:
+
+            task_instruction = f"""
+            Tugas:
+            Buat 3 balasan dengan gaya ngeles yang lucu, realistis, halus, dan relatable.
+
+            STYLE:
+            - Terdengar natural
+            - Jangan terlalu jahat
+            - Jangan toxic
+            - Jangan manipulatif berlebihan
+            - Harus terasa seperti alasan manusia sehari-hari
+            - Sedikit lucu boleh
+            - Cocok dipakai di WhatsApp
+            - Maksimal 1-2 kalimat
+
+            Pesan:
+            {data.message}
+            """
 
     else:
 
@@ -80,16 +101,16 @@ def generate_reply(data: ReplyRequest):
     prompt = f"""
     Kamu adalah AI assistant untuk membantu orang Indonesia membalas chat secara natural.
 
-    STYLE WAJIB:
-    - Terdengar seperti manusia
-    - Singkat dan jelas
+    STYLE:
+    - Tulis seperti orang Indonesia asli saat chatting WhatsApp
+    - Natural dan realistis
+    - Santai dan manusiawi
     - Jangan terlalu formal
-    - Jangan terlalu kaku
-    - Jangan seperti customer service
-    - Jangan seperti AI
-    - Hindari bahasa baku berlebihan
+    - Jangan terdengar seperti AI atau customer service
+    - Gunakan bahasa chat sehari-hari
     - Maksimal 1-2 kalimat
-    - Balasan harus realistis dipakai di WhatsApp
+    - Setiap balasan harus terasa berbeda
+    - Balasan harus cocok dipakai langsung di WhatsApp
 
     Konteks lawan bicara:
     {data.context}
@@ -110,35 +131,46 @@ def generate_reply(data: ReplyRequest):
     """
 
     response = requests.post(
-        url=
-            "https://openrouter.ai/api/v1/chat/completions",
+        url="https://api.openai.com/v1/chat/completions",
         headers={
             "Authorization":
-                f"Bearer {OPENROUTER_API_KEY}",
+                f"Bearer {OPENAI_API_KEY}",
             "Content-Type":
                 "application/json",
         },
         json={
-            "model":
-                "openai/gpt-oss-120b:free",
+            "model": "gpt-4o-mini",
             "messages": [
                 {
                     "role": "user",
                     "content": prompt
                 }
-            ]
+            ],
+            "temperature": 0.9,
+            "max_tokens": 120
         }
     )
-
+    
     result = response.json()
 
+    print("STATUS:")
     print(response.status_code)
+
+    print("RESULT:")
     print(result)
 
-    if "choices" not in result:
+    if response.status_code != 200:
+
         return {
             "success": False,
-            "provider_response": result
+            "error": result
+        }
+
+    if "choices" not in result:
+
+        return {
+            "success": False,
+            "error": result
         }
 
     text = result["choices"][0]["message"]["content"]
